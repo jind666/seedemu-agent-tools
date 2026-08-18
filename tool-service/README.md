@@ -42,6 +42,21 @@ The service is then available at:
 - Health check: <http://127.0.0.1:8000/api/v1/health>
 - Runtime backend: <http://127.0.0.1:8000/api/v1/runtime>
 - Tool discovery: <http://127.0.0.1:8000/api/v1/tools>
+- Tool invocation: <http://127.0.0.1:8000/api/v1/tools/{name}/invoke>
+
+Invoke a tool by posting its arguments as the request body:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/tools/network.inspect_ip_address/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"address": "10.0.0.1"}'
+```
+
+Errors use a structured envelope with a machine-readable code:
+
+```json
+{"error": {"code": "invalid_arguments", "message": "...", "detail": [...]}}
+```
 
 ## Run Tests
 
