@@ -14,6 +14,10 @@ from seedemu_tool_service.models.tool import ToolDefinition
 ToolHandler = Callable[..., Any]
 
 
+class ToolNotFoundError(KeyError):
+    """Raised when an invocation targets a tool that is not registered."""
+
+
 @dataclass(frozen=True, slots=True)
 class RegisteredTool:
     """A tool's agent-visible definition and executable handler."""
@@ -58,7 +62,7 @@ class ToolRegistry:
         try:
             registered_tool = self._tools[name]
         except KeyError as error:
-            raise KeyError(f"Tool not found: {name}") from error
+            raise ToolNotFoundError(f"Tool not found: {name}") from error
 
         validated_arguments = registered_tool.arguments_model.model_validate(arguments).model_dump()
 
