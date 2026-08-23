@@ -138,3 +138,20 @@ The PKI-domain skeleton lives under `tools/pki/` with the same domain-owned stru
 tool is `pki.inspect_certificate_file`, which uses `openssl x509` to inspect a certificate file
 inside a selected emulated node. The source container must provide `openssl`, and the supplied path
 is interpreted inside that container.
+
+The initial PKI tools are read-only diagnostics for certificate and TLS service state:
+
+- `pki.inspect_certificate_file`: inspect an X.509 certificate file inside an emulated node and
+  return both OpenSSL output and parsed subject, issuer, validity, serial, and SHA-256 fingerprint
+  fields when present.
+- `pki.inspect_remote_tls_certificate`: connect from an emulated node to a TLS service with
+  `openssl s_client`, optionally using SNI, and inspect the certificate presented by the service.
+  The source container must provide `timeout` and `openssl`.
+- `pki.verify_certificate_chain`: run `openssl verify` inside an emulated node to check whether a
+  certificate chains to supplied CA material.
+- `pki.check_certificate_expiration`: run `openssl x509 -checkend` inside an emulated node to
+  determine whether a certificate is expired or will expire within a warning window.
+
+These tools support service-diagnosis and security-response tasks where network connectivity is
+available but HTTPS/TLS trust, certificate deployment, or certificate expiration may be the root
+cause of failure.

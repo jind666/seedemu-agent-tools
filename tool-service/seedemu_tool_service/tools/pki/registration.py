@@ -3,7 +3,12 @@
 from seedemu_tool_service.backends import RuntimeBackend
 from seedemu_tool_service.models.tool import ToolDefinition
 from seedemu_tool_service.registry import ToolRegistry
-from seedemu_tool_service.tools.pki.models import InspectCertificateFileArguments
+from seedemu_tool_service.tools.pki.models import (
+    CheckCertificateExpirationArguments,
+    InspectCertificateFileArguments,
+    InspectRemoteTLSCertificateArguments,
+    VerifyCertificateChainArguments,
+)
 from seedemu_tool_service.tools.pki.tools import PKITools
 
 
@@ -19,4 +24,31 @@ def register_pki_tools(registry: ToolRegistry, backend: RuntimeBackend) -> None:
         ),
         handler=tools.inspect_certificate_file,
         arguments_model=InspectCertificateFileArguments,
+    )
+    registry.register(
+        definition=ToolDefinition(
+            name="pki.inspect_remote_tls_certificate",
+            domain="pki",
+            description="Inspect the certificate presented by a remote TLS service.",
+        ),
+        handler=tools.inspect_remote_tls_certificate,
+        arguments_model=InspectRemoteTLSCertificateArguments,
+    )
+    registry.register(
+        definition=ToolDefinition(
+            name="pki.verify_certificate_chain",
+            domain="pki",
+            description="Verify a certificate chain against trusted CA material.",
+        ),
+        handler=tools.verify_certificate_chain,
+        arguments_model=VerifyCertificateChainArguments,
+    )
+    registry.register(
+        definition=ToolDefinition(
+            name="pki.check_certificate_expiration",
+            domain="pki",
+            description="Check whether a certificate is expired or near expiration.",
+        ),
+        handler=tools.check_certificate_expiration,
+        arguments_model=CheckCertificateExpirationArguments,
     )
