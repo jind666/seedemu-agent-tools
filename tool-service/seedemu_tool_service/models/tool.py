@@ -21,3 +21,18 @@ class ToolListResponse(BaseModel):
 
     tools: list[ToolDefinition]
     count: int
+
+
+class ToolInvocationRequest(BaseModel):
+    """Arguments supplied when invoking a registered tool."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class ToolInvocationResponse(BaseModel):
+    """Result returned by a successful tool invocation."""
+
+    tool: str
+    result: Any

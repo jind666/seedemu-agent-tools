@@ -1,12 +1,18 @@
-"""Tool discovery endpoints."""
+"""Tool discovery and invocation endpoints."""
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import ValidationError
 
 from seedemu_tool_service.api.dependencies import get_tool_registry
-from seedemu_tool_service.models.tool import ToolListResponse
-from seedemu_tool_service.registry.registry import ToolRegistry
+from seedemu_tool_service.backends import RuntimeBackendError, RuntimeTargetNotFoundError
+from seedemu_tool_service.models.tool import (
+    ToolInvocationRequest,
+    ToolInvocationResponse,
+    ToolListResponse,
+)
+from seedemu_tool_service.registry import ToolNotFoundError, ToolRegistry
 
 router = APIRouter(tags=["tools"])
 
@@ -19,3 +25,40 @@ def list_tools(
 
     tools = registry.list_tools()
     return ToolListResponse(tools=tools, count=len(tools))
+
+
+@router.post("/{tool_name}/invoke", response_model=ToolInvocationResponse)
+async def invoke_tool(
+    tool_name: str,
+    request: ToolInvocationRequest,
+    registry: Annotated[ToolRegistry, Depends(get_tool_registry)],
+) -> ToolInvocationResponse:
+    """Validate and invoke a registered tool by name."""
+
+    try:
+        result = await registry.invoke(tool_name, request.arguments)
+    except ToolNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tool not found: {tool_name}",
+        ) from error
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "message": "Invalid tool arguments",
+                "errors": error.errors(include_url=False),
+            },
+        ) from error
+    except RuntimeTargetNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(error),
+        ) from error
+    except RuntimeBackendError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
+
+    return ToolInvocationResponse(tool=tool_name, result=result)
