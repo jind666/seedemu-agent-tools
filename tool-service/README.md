@@ -134,16 +134,23 @@ container must provide `vtysh` and a compatible routing daemon.
 
 ### PKI Domain
 
-The PKI-domain skeleton lives under `tools/pki/` with the same domain-owned structure. Its reference
-tool is `pki.inspect_certificate_file`, which uses `openssl x509` to inspect a certificate file
-inside a selected emulated node. The source container must provide `openssl`, and the supplied path
-is interpreted inside that container.
+The PKI-domain skeleton lives under `tools/pki/`. It is organized by tool category so certificate
+inspection, remote TLS inspection, trust verification, and expiration checks can evolve separately.
+The source container must provide `openssl`, and supplied paths are interpreted inside that
+container.
 
 The initial PKI tools are read-only diagnostics for certificate and TLS service state:
 
 - `pki.inspect_certificate_file`: inspect an X.509 certificate file inside an emulated node and
   return both OpenSSL output and parsed subject, issuer, validity, serial, and SHA-256 fingerprint
   fields when present.
+- `pki.inspect_certificate_names`: inspect a certificate subject and subjectAltName extension.
+- `pki.inspect_certificate_extensions`: inspect common X.509 extensions such as key usage,
+  extended key usage, basic constraints, and subjectAltName.
+- `pki.inspect_certificate_public_key`: inspect the public-key algorithm and key size embedded in
+  a certificate.
+- `pki.get_certificate_fingerprint`: return a certificate fingerprint using SHA-1, SHA-256, or
+  SHA-512.
 - `pki.inspect_remote_tls_certificate`: connect from an emulated node to a TLS service with
   `openssl s_client`, optionally using SNI, and inspect the certificate presented by the service.
   The source container must provide `timeout` and `openssl`.
