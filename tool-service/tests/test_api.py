@@ -48,19 +48,49 @@ def test_tool_registry_lists_network_tools() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["count"] == 26
     names = [tool["name"] for tool in body["tools"]]
-    assert "benchmark.runtime.projects" in names
-    assert "benchmark.runtime.describe" in names
-    assert "benchmark.runtime.service_capabilities" in names
-    assert "operation.container.stop" in names
-    assert "operation.dns.set_nameserver" in names
-    assert "operation.firewall.add_drop" in names
-    assert "operation.netem.apply" in names
-    assert "benchmark.topology.discover_python" in names
-    assert "benchmark.topology.lifecycle" in names
-    assert "dns.lookup" in names
-    assert "network.ping" in names
+    expected_existing_tools = {
+        "bgp.summary",
+        "dns.compare",
+        "dns.lookup",
+        "dns.reverse_lookup",
+        "dns.trace",
+        "dns.update",
+        "network.inspect_ip_address",
+        "network.ping",
+        "pki.check_certificate_expiration",
+        "pki.get_certificate_fingerprint",
+        "pki.inspect_certificate_extensions",
+        "pki.inspect_certificate_file",
+        "pki.inspect_certificate_names",
+        "pki.inspect_certificate_public_key",
+        "pki.inspect_remote_tls_certificate",
+        "pki.verify_certificate_chain",
+    }
+    expected_benchmark_tools = {
+        "benchmark.runtime.projects",
+        "benchmark.runtime.describe",
+        "benchmark.runtime.service_capabilities",
+        "benchmark.topology.discover_python",
+        "benchmark.topology.lifecycle",
+        "operation.container.inspect",
+        "operation.container.start",
+        "operation.container.stop",
+        "operation.dns.inspect",
+        "operation.dns.probe",
+        "operation.dns.set_nameserver",
+        "operation.firewall.inspect_drop",
+        "operation.firewall.add_drop",
+        "operation.firewall.delete_drop",
+        "operation.netem.inspect",
+        "operation.netem.apply",
+        "operation.network.probe",
+    }
+    assert expected_existing_tools <= set(names)
+    assert expected_benchmark_tools <= set(names)
+    assert body["count"] == len(names)
+    bgp_summary = next(tool for tool in body["tools"] if tool["name"] == "bgp.summary")
+    assert bgp_summary["domain"] == "bgp"
 
 
 def test_runtime_status() -> None:
