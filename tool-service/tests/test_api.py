@@ -48,15 +48,19 @@ def test_tool_registry_lists_network_tools() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["count"] == 5
-    assert [tool["name"] for tool in body["tools"]] == [
-        "bgp.summary",
-        "dns.lookup",
-        "network.inspect_ip_address",
-        "network.ping",
-        "pki.inspect_certificate_file",
-    ]
-    assert body["tools"][0]["domain"] == "bgp"
+    assert body["count"] == 26
+    names = [tool["name"] for tool in body["tools"]]
+    assert "benchmark.runtime.projects" in names
+    assert "benchmark.runtime.describe" in names
+    assert "benchmark.runtime.service_capabilities" in names
+    assert "operation.container.stop" in names
+    assert "operation.dns.set_nameserver" in names
+    assert "operation.firewall.add_drop" in names
+    assert "operation.netem.apply" in names
+    assert "benchmark.topology.discover_python" in names
+    assert "benchmark.topology.lifecycle" in names
+    assert "dns.lookup" in names
+    assert "network.ping" in names
 
 
 def test_runtime_status() -> None:

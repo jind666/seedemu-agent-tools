@@ -8,6 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from seedemu_tool_service.backends import RuntimeBackendError, RuntimeTargetNotFoundError
 from seedemu_tool_service.registry.registry import ToolNotFoundError
+from seedemu_tool_service.tools.benchmark.errors import ToolRejectedError
 
 
 class ErrorInfo(BaseModel):
@@ -50,6 +51,10 @@ def register_exception_handlers(application: FastAPI) -> None:
         request: Request, exc: RuntimeTargetNotFoundError
     ) -> JSONResponse:
         return _error_response(404, "target_not_found", str(exc))
+
+    @application.exception_handler(ToolRejectedError)
+    async def tool_rejected(request: Request, exc: ToolRejectedError) -> JSONResponse:
+        return _error_response(400, "tool_rejected", str(exc))
 
     @application.exception_handler(RuntimeBackendError)
     async def backend_error(request: Request, exc: RuntimeBackendError) -> JSONResponse:

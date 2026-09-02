@@ -1,5 +1,6 @@
 # SEEDemu Agent Tool Service
 
+
 FastAPI service exposing agent-facing operations for SEED-Emulator.
 
 ## Development Setup
@@ -34,6 +35,20 @@ python -m pip install -e ".[dev]"
 ```bash
 python -m uvicorn seedemu_tool_service.main:app --reload
 ```
+
+Benchmark topology deployment resources are documented with their owning domain in
+`seedemu_tool_service/tools/benchmark/README.md`; other Tool Service domains do not
+depend on them.
+
+The SEED workspace itself is **not** a tool-service setting: this service makes no assumption about where
+the SEED emulator lives. `benchmark.topology.discover_python` accepts any existing trusted Python
+entrypoint selected by the user, performs a bounded Python-only trial compile, parses the generated Compose,
+and returns a normalized service/network/probe descriptor. `benchmark.runtime.describe` produces the equivalent
+read-only descriptor input for an already running project through the Docker SDK. Clients never invoke Docker CLI;
+all runtime discovery remains behind this API.
+The declared `seed_root` identifies the SEED library checkout; the topology script may be elsewhere on the host.
+`benchmark.topology.lifecycle` can build, start, check, and stop exactly that bound Compose artifact.
+Its path must remain inside the matching artifact ID and its project name is validated.
 
 The service is then available at:
 
@@ -98,6 +113,11 @@ docker compose down
 ```
 
 ## Tool Domains
+
+The service is a thin tool adapter, not a benchmark planner or policy engine. Topology APIs return pure facts;
+`runtime.service_capabilities` returns fixed read-only operation evidence; generic `operation.*` tools perform one
+typed project/service-scoped action. LLM calls, `available_faults`, fault meaning, candidate authorization,
+session policy, qualification, recovery planning, and scoring live in Benchmark Agent and its Adapter.
 
 Tools are grouped into packages under `seedemu_tool_service/tools/`. Each domain exposes one
 registration function that binds its functions or methods to the shared `ToolRegistry`.
