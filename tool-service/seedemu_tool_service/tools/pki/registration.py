@@ -1,54 +1,22 @@
 """Registration entry point for PKI-domain tools."""
 
 from seedemu_tool_service.backends import RuntimeBackend
-from seedemu_tool_service.models.tool import ToolDefinition
 from seedemu_tool_service.registry import ToolRegistry
-from seedemu_tool_service.tools.pki.models import (
-    CheckCertificateExpirationArguments,
-    InspectCertificateFileArguments,
-    InspectRemoteTLSCertificateArguments,
-    VerifyCertificateChainArguments,
+from seedemu_tool_service.tools.pki.certificate_inspection import (
+    register_certificate_inspection_tools,
 )
-from seedemu_tool_service.tools.pki.tools import PKITools
+from seedemu_tool_service.tools.pki.expiration import register_expiration_tools
+from seedemu_tool_service.tools.pki.remote_tls import register_remote_tls_tools
+from seedemu_tool_service.tools.pki.trust_verification import (
+    register_trust_verification_tools,
+)
 
 
 def register_pki_tools(registry: ToolRegistry, backend: RuntimeBackend) -> None:
-    """Create the PKI tool set and register its handlers."""
+    """Register all implemented PKI tool categories."""
 
-    tools = PKITools(backend)
-    registry.register(
-        definition=ToolDefinition(
-            name="pki.inspect_certificate_file",
-            domain="pki",
-            description="Inspect an X.509 certificate file inside an emulated node.",
-        ),
-        handler=tools.inspect_certificate_file,
-        arguments_model=InspectCertificateFileArguments,
-    )
-    registry.register(
-        definition=ToolDefinition(
-            name="pki.inspect_remote_tls_certificate",
-            domain="pki",
-            description="Inspect the certificate presented by a remote TLS service.",
-        ),
-        handler=tools.inspect_remote_tls_certificate,
-        arguments_model=InspectRemoteTLSCertificateArguments,
-    )
-    registry.register(
-        definition=ToolDefinition(
-            name="pki.verify_certificate_chain",
-            domain="pki",
-            description="Verify a certificate chain against trusted CA material.",
-        ),
-        handler=tools.verify_certificate_chain,
-        arguments_model=VerifyCertificateChainArguments,
-    )
-    registry.register(
-        definition=ToolDefinition(
-            name="pki.check_certificate_expiration",
-            domain="pki",
-            description="Check whether a certificate is expired or near expiration.",
-        ),
-        handler=tools.check_certificate_expiration,
-        arguments_model=CheckCertificateExpirationArguments,
-    )
+    register_certificate_inspection_tools(registry, backend)
+    register_remote_tls_tools(registry, backend)
+    register_trust_verification_tools(registry, backend)
+    register_expiration_tools(registry, backend)
+
