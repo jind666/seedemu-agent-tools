@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from seedemu_tool_service import __version__
+from seedemu_tool_service.api.errors import register_exception_handlers
 from seedemu_tool_service.api.router import api_router
 from seedemu_tool_service.config import get_settings
 from seedemu_tool_service.models.service import ServiceInfo
@@ -17,6 +18,7 @@ def create_app() -> FastAPI:
         version=__version__,
         description="Agent-facing actions and observations for SEED-Emulator.",
     )
+    register_exception_handlers(application)
     application.include_router(api_router, prefix=settings.api_v1_prefix)
 
     @application.get("/", tags=["service"], response_model=ServiceInfo)
