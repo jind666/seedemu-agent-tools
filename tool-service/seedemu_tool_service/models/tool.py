@@ -23,17 +23,9 @@ class ToolListResponse(BaseModel):
     count: int
 
 
-class ToolInvocationRequest(BaseModel):
-    """Arguments supplied when invoking a registered tool."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    arguments: dict[str, Any] = Field(default_factory=dict)
-
-
 class ToolInvocationResponse(BaseModel):
-    """Result returned by a successful tool invocation."""
+    """Uniform envelope returned after a tool invocation."""
 
-    tool: str
+    name: str
     result: dict[str, Any]
     duration_ms: float
