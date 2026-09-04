@@ -1,9 +1,10 @@
 """Tool discovery and invocation endpoints."""
 
-from typing import Annotated
+import time
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
 from seedemu_tool_service.api.dependencies import get_tool_registry
 from seedemu_tool_service.backends import RuntimeBackendError, RuntimeTargetNotFoundError
@@ -36,7 +37,9 @@ async def invoke_tool(
     """Validate and invoke a registered tool by name."""
 
     try:
+        started = time.perf_counter()
         result = await registry.invoke(tool_name, request.arguments)
+        duration_ms = round((time.perf_counter() - started) * 1000, 3)
     except ToolNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,4 +64,5 @@ async def invoke_tool(
             detail=str(error),
         ) from error
 
-    return ToolInvocationResponse(tool=tool_name, result=result)
+    payload = result.model_dump() if isinstance(result, BaseModel) else result
+    return ToolInvocationResponse(tool=tool_name, result=payload, duration_ms = duration_ms)

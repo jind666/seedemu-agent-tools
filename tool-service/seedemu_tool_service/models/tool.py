@@ -1,4 +1,4 @@
-"""Models used for tool discovery."""
+"""Models used for tool discovery and invocation."""
 
 from typing import Any
 
@@ -35,4 +35,5 @@ class ToolInvocationResponse(BaseModel):
     """Result returned by a successful tool invocation."""
 
     tool: str
-    result: Any
+    result: dict[str, Any]
+    duration_ms: float

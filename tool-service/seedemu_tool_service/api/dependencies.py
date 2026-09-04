@@ -4,6 +4,7 @@ from functools import lru_cache
 
 from seedemu_tool_service.backends import DockerRuntimeBackend, RuntimeBackend
 from seedemu_tool_service.registry.registry import ToolRegistry
+from seedemu_tool_service.tools.benchmark import register_benchmark_tools
 from seedemu_tool_service.tools.bgp import register_bgp_tools
 from seedemu_tool_service.tools.dns import register_dns_tools
 from seedemu_tool_service.tools.network import register_network_tools
@@ -22,6 +23,7 @@ def create_tool_registry() -> ToolRegistry:
 
     registry = ToolRegistry()
     backend = get_runtime_backend()
+    register_benchmark_tools(registry, backend)
     register_bgp_tools(registry, backend)
     register_dns_tools(registry, backend)
     register_network_tools(registry, backend)

@@ -1,5 +1,6 @@
 # SEEDemu Agent Tool Service
 
+
 FastAPI service exposing agent-facing operations for SEED-Emulator.
 
 ## Development Setup
@@ -35,6 +36,20 @@ python -m pip install -e ".[dev]"
 python -m uvicorn seedemu_tool_service.main:app --reload
 ```
 
+Benchmark topology deployment resources are documented with their owning domain in
+`seedemu_tool_service/tools/benchmark/README.md`; other Tool Service domains do not
+depend on them.
+
+The SEED workspace itself is **not** a tool-service setting: this service makes no assumption about where
+the SEED emulator lives. `benchmark.topology.discover_python` accepts any existing trusted Python
+entrypoint selected by the user, performs a bounded Python-only trial compile, parses the generated Compose,
+and returns a normalized service/network/probe descriptor. `benchmark.runtime.describe` produces the equivalent
+read-only descriptor input for an already running project through the Docker SDK. Clients never invoke Docker CLI;
+all runtime discovery remains behind this API.
+The declared `seed_root` identifies the SEED library checkout; the topology script may be elsewhere on the host.
+`benchmark.topology.lifecycle` can build, start, check, and stop exactly that bound Compose artifact.
+Its path must remain inside the matching artifact ID and its project name is validated.
+
 The service is then available at:
 
 - API: <http://127.0.0.1:8000>
@@ -42,6 +57,21 @@ The service is then available at:
 - Health check: <http://127.0.0.1:8000/api/v1/health>
 - Runtime backend: <http://127.0.0.1:8000/api/v1/runtime>
 - Tool discovery: <http://127.0.0.1:8000/api/v1/tools>
+- Tool invocation: <http://127.0.0.1:8000/api/v1/tools/{name}/invoke>
+
+Invoke a tool by posting its arguments as the request body:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/tools/network.inspect_ip_address/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"address": "10.0.0.1"}'
+```
+
+Errors use a structured envelope with a machine-readable code:
+
+```json
+{"error": {"code": "invalid_arguments", "message": "...", "detail": [...]}}
+```
 
 ## Invoke a Tool
 
@@ -126,6 +156,11 @@ docker compose down
 
 ## Tool Domains
 
+The service is a thin tool adapter, not a benchmark planner or policy engine. Topology APIs return pure facts;
+`runtime.service_capabilities` returns fixed read-only operation evidence; generic `operation.*` tools perform one
+typed project/service-scoped action. LLM calls, `available_faults`, fault meaning, candidate authorization,
+session policy, qualification, recovery planning, and scoring live in Benchmark Agent and its Adapter.
+
 Tools are grouped into packages under `seedemu_tool_service/tools/`. Each domain exposes one
 registration function that binds its functions or methods to the shared `ToolRegistry`.
 
@@ -176,16 +211,23 @@ container must provide `vtysh` and a compatible routing daemon.
 
 ### PKI Domain
 
-The PKI-domain skeleton lives under `tools/pki/` with the same domain-owned structure. Its reference
-tool is `pki.inspect_certificate_file`, which uses `openssl x509` to inspect a certificate file
-inside a selected emulated node. The source container must provide `openssl`, and the supplied path
-is interpreted inside that container.
+The PKI-domain skeleton lives under `tools/pki/`. It is organized by tool category so certificate
+inspection, remote TLS inspection, trust verification, and expiration checks can evolve separately.
+The source container must provide `openssl`, and supplied paths are interpreted inside that
+container.
 
 The initial PKI tools are read-only diagnostics for certificate and TLS service state:
 
 - `pki.inspect_certificate_file`: inspect an X.509 certificate file inside an emulated node and
   return both OpenSSL output and parsed subject, issuer, validity, serial, and SHA-256 fingerprint
   fields when present.
+- `pki.inspect_certificate_names`: inspect a certificate subject and subjectAltName extension.
+- `pki.inspect_certificate_extensions`: inspect common X.509 extensions such as key usage,
+  extended key usage, basic constraints, and subjectAltName.
+- `pki.inspect_certificate_public_key`: inspect the public-key algorithm and key size embedded in
+  a certificate.
+- `pki.get_certificate_fingerprint`: return a certificate fingerprint using SHA-1, SHA-256, or
+  SHA-512.
 - `pki.inspect_remote_tls_certificate`: connect from an emulated node to a TLS service with
   `openssl s_client`, optionally using SNI, and inspect the certificate presented by the service.
   The source container must provide `timeout` and `openssl`.

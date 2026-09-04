@@ -15,7 +15,7 @@ ToolHandler = Callable[..., Any]
 
 
 class ToolNotFoundError(KeyError):
-    """Raised when an invocation names a tool that is not registered."""
+    """Raised when an invocation targets a tool that is not registered."""
 
 
 @dataclass(frozen=True, slots=True)
